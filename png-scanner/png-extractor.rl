@@ -22,7 +22,7 @@ var pngStart int
 var pngEnd int
 
 func logAddr(p int) string {
-  return fmt.Sprintf("0x%02X", offset+p)
+  return fmt.Sprintf("0x%02X", p)
 }
 func uint32Val(p int) uint32 {
   return binary.BigEndian.Uint32(data[p-3:p+1])
@@ -30,11 +30,24 @@ func uint32Val(p int) uint32 {
 func check(e error) {
   if e != nil { log.Fatal(e) }
 }
+var uidIdx int = 0
+func genPNGFileName() string {
+  s := fmt.Sprintf("found%d.png", uidIdx)
+  uidIdx += 1
+  return s
+}
 
 %%{
   machine png_extractor;
   action png_found {
-    if verb { fmt.Printf("png found at: %s\n", logAddr(p-PNG_MAGIC_LEN+1)) }
+    pngStart = offset+p-PNG_MAGIC_LEN+1
+    if verb { fmt.Printf("png found at: %s\n", logAddr(pngStart)) }
+  }
+  action extract_png {
+    pngEnd = offset+p
+    if verb {
+      fmt.Printf("Valid PNG found at [%s-%s]\n", logAddr(pngStart), logAddr(pngEnd))
+    }
   }
   action skip_data {
     if p + chunkLen < BUF_LEN {
@@ -58,7 +71,7 @@ func check(e error) {
 
 
   chunk         = chunk_len other_chunk_type  chunk_data chunk_crc;
-  end_chunk     = chunk_len end_chunk_type    chunk_data chunk_crc;
+  end_chunk     = chunk_len end_chunk_type    chunk_data chunk_crc @extract_png;
   header_chunk  = chunk_len header_chunk_type chunk_data chunk_crc;
 
   png = png_magic @png_found header_chunk chunk+ end_chunk;
