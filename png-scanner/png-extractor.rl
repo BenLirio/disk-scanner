@@ -8,8 +8,11 @@ import (
   "encoding/binary"
 )
 
+const (
+  FROM_BEGINING int = 0
+)
 var BUF_LEN int = 256
-var verb bool = true
+var verb int = 1
 var offset int
 var PNG_MAGIC_LEN int = 8
 var chunkLen int = 0
@@ -20,6 +23,8 @@ var data []byte
 var toSkip bool = false
 var pngStart int
 var pngEnd int
+var err error
+var f *os.File
 
 func logAddr(p int) string {
   return fmt.Sprintf("0x%02X", p)
@@ -41,13 +46,21 @@ func genPNGFileName() string {
   machine png_extractor;
   action png_found {
     pngStart = offset+p-PNG_MAGIC_LEN+1
-    if verb { fmt.Printf("png found at: %s\n", logAddr(pngStart)) }
+    if verb>1 { fmt.Printf("png found at: %s\n", logAddr(pngStart)) }
   }
   action extract_png {
     pngEnd = offset+p
-    if verb {
-      fmt.Printf("Valid PNG found at [%s-%s]\n", logAddr(pngStart), logAddr(pngEnd))
+    if verb>0 {
+      fmt.Printf("Valid PNG from %s to %s\n", logAddr(pngStart), logAddr(pngEnd))
     }
+    f.Seek(int64(pngStart),FROM_BEGINING)
+    buf := make([]byte, pngEnd-pngStart)
+    f.Read(buf)
+    fout,err := os.Create(genPNGFileName())
+    check(err)
+    _,err = fout.Write(buf)
+    check(err)
+    f.Seek(int64(offset),FROM_BEGINING)
   }
   action skip_data {
     if p + chunkLen < BUF_LEN {
@@ -65,9 +78,9 @@ func genPNGFileName() string {
   chunk_crc = extend{4};
   chunk_data = '' > skip_data;
 
-  header_chunk_type = "IHDR" @{ if verb { fmt.Printf("IHDR at: %s\n", logAddr(p-3)) } };
-  end_chunk_type = "IEND" @{ if verb { fmt.Printf("IEND at: %s\n", logAddr(p-3)) } };
-  other_chunk_type = "PLTE"|"IDAT" @{ if verb { fmt.Printf("PLTE|IDAT at: %s\n", logAddr(p-3)) } };
+  header_chunk_type = "IHDR" @{ if verb>1 { fmt.Printf("IHDR at: %s\n", logAddr(p-3)) } };
+  end_chunk_type = "IEND" @{ if verb>1 { fmt.Printf("IEND at: %s\n", logAddr(p-3)) } };
+  other_chunk_type = "PLTE"|"IDAT" @{ if verb>1 { fmt.Printf("PLTE|IDAT at: %s\n", logAddr(p-3)) } };
 
 
   chunk         = chunk_len other_chunk_type  chunk_data chunk_crc;
@@ -86,7 +99,7 @@ func main() {
 
 
   offset = 0
-  f,err := os.Open("data/image.png")
+  f,err = os.Open("data/image.png")
   check(err)
 
   for {

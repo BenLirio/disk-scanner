@@ -10,8 +10,11 @@ import (
   "encoding/binary"
 )
 
+const (
+  FROM_BEGINING int = 0
+)
 var BUF_LEN int = 256
-var verb bool = true
+var verb int = 1
 var offset int
 var PNG_MAGIC_LEN int = 8
 var chunkLen int = 0
@@ -22,6 +25,8 @@ var data []byte
 var toSkip bool = false
 var pngStart int
 var pngEnd int
+var err error
+var f *os.File
 
 func logAddr(p int) string {
   return fmt.Sprintf("0x%02X", p)
@@ -40,7 +45,7 @@ func genPNGFileName() string {
 }
 
 
-//line png-extractor.go:44
+//line png-extractor.go:49
 var _png_extractor_actions []byte = []byte{
 	0, 1, 0, 1, 1, 1, 2, 1, 3, 
 	1, 4, 1, 5, 1, 6, 2, 0, 
@@ -417,23 +422,23 @@ const png_extractor_error int = -1
 const png_extractor_en_png_extractor int = 0
 
 
-//line png-extractor.rl:80
+//line png-extractor.rl:93
 
 
 
 func main() {
   data = make([]byte, BUF_LEN)
   
-//line png-extractor.go:428
+//line png-extractor.go:433
 	{
 	cs = png_extractor_start
 	}
 
-//line png-extractor.rl:86
+//line png-extractor.rl:99
 
 
   offset = 0
-  f,err := os.Open("data/image.png")
+  f,err = os.Open("data/image.png")
   check(err)
 
   for {
@@ -443,7 +448,7 @@ func main() {
     p = 0
     pe = n
     
-//line png-extractor.go:447
+//line png-extractor.go:452
 	{
 	var _klen int
 	var _trans int
@@ -520,21 +525,29 @@ _match:
 		_acts++
 		switch _png_extractor_actions[_acts-1] {
 		case 0:
-//line png-extractor.rl:42
+//line png-extractor.rl:47
 
     pngStart = offset+p-PNG_MAGIC_LEN+1
-    if verb { fmt.Printf("png found at: %s\n", logAddr(pngStart)) }
+    if verb>1 { fmt.Printf("png found at: %s\n", logAddr(pngStart)) }
   
 		case 1:
-//line png-extractor.rl:46
+//line png-extractor.rl:51
 
     pngEnd = offset+p
-    if verb {
-      fmt.Printf("Valid PNG found at [%s-%s]\n", logAddr(pngStart), logAddr(pngEnd))
+    if verb>0 {
+      fmt.Printf("Valid PNG from %s to %s\n", logAddr(pngStart), logAddr(pngEnd))
     }
+    f.Seek(int64(pngStart),FROM_BEGINING)
+    buf := make([]byte, pngEnd-pngStart)
+    f.Read(buf)
+    fout,err := os.Create(genPNGFileName())
+    check(err)
+    _,err = fout.Write(buf)
+    check(err)
+    f.Seek(int64(offset),FROM_BEGINING)
   
 		case 2:
-//line png-extractor.rl:52
+//line png-extractor.rl:65
 
     if p + chunkLen < BUF_LEN {
       p += chunkLen
@@ -545,18 +558,18 @@ _match:
     }
   
 		case 3:
-//line png-extractor.rl:64
+//line png-extractor.rl:77
  chunkLen=int(uint32Val(p)) 
 		case 4:
-//line png-extractor.rl:68
- if verb { fmt.Printf("IHDR at: %s\n", logAddr(p-3)) } 
+//line png-extractor.rl:81
+ if verb>1 { fmt.Printf("IHDR at: %s\n", logAddr(p-3)) } 
 		case 5:
-//line png-extractor.rl:69
- if verb { fmt.Printf("IEND at: %s\n", logAddr(p-3)) } 
+//line png-extractor.rl:82
+ if verb>1 { fmt.Printf("IEND at: %s\n", logAddr(p-3)) } 
 		case 6:
-//line png-extractor.rl:70
- if verb { fmt.Printf("PLTE|IDAT at: %s\n", logAddr(p-3)) } 
-//line png-extractor.go:560
+//line png-extractor.rl:83
+ if verb>1 { fmt.Printf("PLTE|IDAT at: %s\n", logAddr(p-3)) } 
+//line png-extractor.go:573
 		}
 	}
 
@@ -569,7 +582,7 @@ _again:
 	_out: {}
 	}
 
-//line png-extractor.rl:99
+//line png-extractor.rl:112
     if toSkip {
       toSkip = false
       _, err = f.Seek(int64(offset + p + chunkLen), 0)
