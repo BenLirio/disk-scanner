@@ -20,14 +20,10 @@ type Chunk struct {
 }
 var chunk Chunk
 var verb bool = true
+var png []byte
+var pngStart int
+var pngEnd int
 
-type Png struct {
-  Height uint32
-  Width uint32
-  BitDepth uint8
-  Chunks []Chunk
-}
-var png Png
 func uint32Val(data []byte,p int) uint32 {
   return binary.BigEndian.Uint32(data[p-3:p+1])
 }
@@ -35,82 +31,82 @@ func uint8Val(data []byte,p int) uint8 {
   return data[p]
 }
 
-//line scanner.rl:36
+//line scanner.rl:32
 
-//line scanner.rl:37
-
-//line scanner.rl:38
+//line scanner.rl:33
 
 
-//line scanner.rl:84
+//line scanner.rl:66
 
 
 
-//line scanner.go:50
+//line scanner.go:44
 var _scanner_actions []byte = []byte{
-	0, 1, 0, 1, 1, 1, 2, 1, 3, 
-	1, 4, 
+	0, 1, 0, 1, 1, 1, 2, 2, 2, 
+	3, 
 }
 
 var _scanner_key_offsets []byte = []byte{
 	0, 0, 1, 2, 3, 4, 5, 6, 
-	7, 8, 8, 8, 8, 8, 9, 10, 
-	11, 12, 12, 12, 12, 12, 12, 12, 
-	12, 12, 12, 
+	7, 8, 8, 8, 8, 8, 9, 9, 
+	9, 9, 9, 9, 9, 9, 10, 11, 
+	12, 12, 12, 12, 12, 
 }
 
 var _scanner_trans_keys []byte = []byte{
 	137, 80, 78, 71, 13, 10, 26, 10, 
-	73, 72, 68, 82, 
+	73, 69, 78, 68, 
 }
 
 var _scanner_single_lengths []byte = []byte{
 	0, 1, 1, 1, 1, 1, 1, 1, 
-	1, 0, 0, 0, 0, 1, 1, 1, 
-	1, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 
+	1, 0, 0, 0, 0, 1, 0, 0, 
+	0, 0, 0, 0, 0, 1, 1, 1, 
+	0, 0, 0, 0, 0, 
 }
 
 var _scanner_range_lengths []byte = []byte{
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 
+	0, 0, 0, 0, 0, 
 }
 
 var _scanner_index_offsets []byte = []byte{
 	0, 0, 2, 4, 6, 8, 10, 12, 
-	14, 16, 17, 18, 19, 20, 22, 24, 
-	26, 28, 29, 30, 31, 32, 33, 34, 
-	35, 36, 37, 
+	14, 16, 17, 18, 19, 20, 22, 23, 
+	24, 25, 26, 27, 28, 29, 31, 33, 
+	35, 36, 37, 38, 39, 
 }
 
 var _scanner_trans_targs []byte = []byte{
 	2, 0, 3, 0, 4, 0, 5, 0, 
 	6, 0, 7, 0, 8, 0, 9, 0, 
-	10, 11, 12, 13, 14, 0, 15, 0, 
-	16, 0, 17, 0, 18, 19, 20, 21, 
-	22, 23, 24, 25, 26, 10, 
+	10, 11, 12, 13, 21, 14, 15, 16, 
+	17, 18, 19, 20, 28, 22, 15, 23, 
+	16, 24, 17, 25, 26, 27, 28, 10, 
+	
 }
 
 var _scanner_trans_actions []byte = []byte{
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 1, 0, 
 	0, 0, 0, 3, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 5, 
-	0, 0, 0, 7, 9, 0, 
+	0, 0, 0, 0, 5, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 7, 0, 
+	
 }
 
 const scanner_start int = 1
-const scanner_first_final int = 26
+const scanner_first_final int = 28
 const scanner_error int = 0
 
 const scanner_en_main int = 1
 
 
-//line scanner.rl:87
+//line scanner.rl:69
 
-var BUF_LEN int = 256
+var BUF_LEN int = 1<<20
 func main() {
   f, err := os.Open("./sample.png")
   if err != nil {
@@ -125,19 +121,24 @@ func main() {
     log.Fatal("Error reading")
   }
   data := make([]byte, n)
+  data := []byte{0x00,0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+  0x00,0x00,0x00,0x01,  0x00,0x00,0x00,0x00,  0x99,             0x00,0x00,0x00,0x00,
+  0x00,0x00,0x00,0x02,  0x00,0x00,0x00,0x00,  0x99,0x88,        0x00,0x00,0x00,0x00,
+  0x00,0x00,0x00,0x03,  0x49,0x45,0x4E,0x44,  0x99,0x88,0x77,   0x00,0x00,0x00,0x00,
+}
   copy(data,b)
   cs := 0
   p := 0
   pe := len(data)
   
-//line scanner.go:134
+//line scanner.go:135
 	{
 	cs = scanner_start
 	}
 
-//line scanner.rl:108
+//line scanner.rl:95
   
-//line scanner.go:141
+//line scanner.go:142
 	{
 	var _klen int
 	var _trans int
@@ -216,37 +217,32 @@ _match:
 		_acts++
 		switch _scanner_actions[_acts-1] {
 		case 0:
-//line scanner.rl:41
+//line scanner.rl:36
 
-    png = Png{}
-    if verb { fmt.Println("Png magic") }
+    pngStart = p-7
+    if verb { fmt.Println("PNG start:", pngStart) }
   
 		case 1:
-//line scanner.rl:45
+//line scanner.rl:40
 
-    chunk.Length = binary.BigEndian.Uint32(data[p-3:p+1])
     chunk.Length = uint32Val(data,p)
     if verb { fmt.Println("chunk.Length =", chunk.Length) }
   
 		case 2:
-//line scanner.rl:62
+//line scanner.rl:46
 
-    png.Width = uint32Val(data,p)
-    if verb { fmt.Println("Png Width =", png.Width) }
+    if p + int(chunk.Length) > len(data) {
+      log.Fatal("Buffered chunk not implemented")
+    }
+    p += int(chunk.Length)
   
 		case 3:
-//line scanner.rl:66
+//line scanner.rl:52
 
-    png.Height = uint32Val(data,p)
-    if verb { fmt.Println("Png Height =", png.Height) }
+    pngEnd = p+1
+    if verb { fmt.Println("PNG end:", pngEnd) }
   
-		case 4:
-//line scanner.rl:70
-
-    png.BitDepth = uint8Val(data,p)
-    if verb { fmt.Println("Bit Depth =", png.BitDepth) }
-  
-//line scanner.go:250
+//line scanner.go:246
 		}
 	}
 
@@ -262,5 +258,5 @@ _again:
 	_out: {}
 	}
 
-//line scanner.rl:109
+//line scanner.rl:96
 }
