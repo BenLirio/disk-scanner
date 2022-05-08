@@ -7,7 +7,7 @@ import (
   "io"
   "encoding/binary"
 )
-var verb int = 100
+var verb int = 10
 
 var matching bool = false
 const (
@@ -15,100 +15,109 @@ const (
   NOT_DONE int = -1
   DONE int = 0
 )
-
+func min(a int, b int) int { if a < b { return a } else { return b } }
 /*
 min data_size = 0x02 because of data_size num
 */
+var sf (func(string, ...interface{}) string) = fmt.Sprintf
 
 //TODO: thumbnail data
 
-//line dynamic_buffer.go:26
+//line dynamic_buffer.go:27
 var _JPEG_scanner_actions []byte = []byte{
-	0, 1, 8, 1, 9, 1, 10, 1, 11, 
-	1, 14, 1, 17, 1, 18, 1, 19, 
-	1, 20, 1, 22, 1, 23, 2, 0, 
-	4, 2, 2, 6, 2, 3, 7, 2, 
-	13, 15, 2, 16, 21, 3, 1, 5, 
-	12, 
+	0, 1, 11, 1, 12, 1, 13, 1, 14, 
+	1, 17, 1, 23, 1, 27, 1, 28, 
+	1, 29, 1, 30, 1, 32, 1, 33, 
+	2, 0, 5, 2, 2, 7, 2, 10, 
+	4, 2, 26, 31, 3, 1, 6, 15, 
+	5, 3, 8, 9, 16, 24, 7, 18, 
+	0, 19, 20, 21, 22, 25, 
 }
 
 var _JPEG_scanner_key_offsets []byte = []byte{
 	0, 1, 2, 2, 2, 3, 4, 5, 
 	6, 7, 7, 7, 7, 7, 7, 7, 
-	7, 7, 7, 7, 8, 9, 10, 
+	7, 7, 7, 8, 8, 8, 8, 9, 
+	10, 11, 
 }
 
 var _JPEG_scanner_trans_keys []byte = []byte{
 	255, 224, 74, 70, 73, 70, 0, 255, 
-	217, 255, 216, 
+	255, 217, 255, 216, 
 }
 
 var _JPEG_scanner_single_lengths []byte = []byte{
 	1, 1, 0, 0, 1, 1, 1, 1, 
 	1, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 1, 1, 1, 1, 
+	0, 0, 1, 0, 0, 0, 1, 1, 
+	1, 1, 
 }
 
 var _JPEG_scanner_range_lengths []byte = []byte{
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 
 }
 
 var _JPEG_scanner_index_offsets []byte = []byte{
 	0, 2, 4, 5, 6, 8, 10, 12, 
 	14, 16, 17, 18, 19, 20, 21, 22, 
-	23, 24, 25, 26, 28, 30, 32, 
+	23, 24, 25, 27, 28, 29, 30, 32, 
+	34, 36, 
 }
 
 var _JPEG_scanner_trans_targs []byte = []byte{
-	1, 21, 2, 21, 3, 4, 5, 21, 
-	6, 21, 7, 21, 8, 21, 9, 21, 
+	1, 24, 2, 24, 3, 4, 5, 24, 
+	6, 24, 7, 24, 8, 24, 9, 24, 
 	10, 11, 12, 13, 14, 15, 16, 17, 
-	18, 19, 20, 21, 21, 21, 22, 21, 
-	0, 21, 21, 21, 21, 21, 21, 21, 
-	21, 21, 21, 21, 21, 21, 21, 21, 
-	21, 21, 21, 21, 21, 21, 21, 21, 
-	
+	18, 19, 24, 20, 21, 22, 23, 24, 
+	24, 24, 25, 24, 0, 24, 24, 24, 
+	24, 24, 24, 24, 24, 24, 24, 24, 
+	24, 24, 24, 24, 24, 24, 24, 24, 
+	24, 24, 24, 24, 24, 24, 24, 
 }
 
 var _JPEG_scanner_trans_actions []byte = []byte{
-	0, 21, 1, 21, 0, 3, 0, 21, 
-	0, 21, 0, 21, 0, 21, 5, 21, 
-	0, 7, 0, 0, 23, 0, 38, 26, 
-	29, 32, 0, 21, 35, 21, 15, 17, 
-	9, 19, 21, 21, 21, 21, 21, 21, 
-	21, 21, 21, 21, 21, 21, 21, 21, 
-	21, 21, 21, 21, 21, 21, 21, 19, 
-	
+	0, 23, 1, 23, 0, 3, 0, 23, 
+	0, 23, 0, 23, 0, 23, 5, 23, 
+	0, 7, 0, 0, 25, 0, 37, 28, 
+	41, 31, 23, 9, 0, 47, 0, 23, 
+	34, 23, 17, 19, 11, 21, 23, 23, 
+	23, 23, 23, 23, 23, 23, 23, 23, 
+	23, 23, 23, 23, 23, 23, 23, 23, 
+	23, 23, 23, 23, 23, 23, 21, 
 }
 
 var _JPEG_scanner_to_state_actions []byte = []byte{
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 11, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 
+	13, 0, 
 }
 
 var _JPEG_scanner_from_state_actions []byte = []byte{
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 13, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 
+	15, 0, 
 }
 
 var _JPEG_scanner_eof_trans []byte = []byte{
-	55, 55, 55, 55, 55, 55, 55, 55, 
-	55, 55, 55, 55, 55, 55, 55, 55, 
-	55, 55, 55, 55, 55, 0, 56, 
+	62, 62, 62, 62, 62, 62, 62, 62, 
+	62, 62, 62, 62, 62, 62, 62, 62, 
+	62, 62, 62, 62, 62, 62, 62, 62, 
+	0, 63, 
 }
 
-const JPEG_scanner_start int = 21
-const JPEG_scanner_first_final int = 21
+const JPEG_scanner_start int = 24
+const JPEG_scanner_first_final int = 24
 const JPEG_scanner_error int = -1
 
-const JPEG_scanner_en_JPEG_scanner int = 21
+const JPEG_scanner_en_JPEG_scanner int = 24
 
 
-//line dynamic_buffer.rl:67
+//line dynamic_buffer.rl:92
 
 
 type Machine struct {
@@ -122,13 +131,14 @@ type Machine struct {
   Y16 uint16
   X8 uint8
   Y8 uint8
+  ToSkip int
 }
 
 func (m *Machine) init() {
   
-//line dynamic_buffer.rl:84
+//line dynamic_buffer.rl:110
   
-//line dynamic_buffer.go:132
+//line dynamic_buffer.go:142
 	{
 	 m.cs = JPEG_scanner_start
 	 m.ts = 0
@@ -136,7 +146,7 @@ func (m *Machine) init() {
 	 m.act = 0
 	}
 
-//line dynamic_buffer.rl:85
+//line dynamic_buffer.rl:111
 }
 func NewMachine() *Machine {
   m := &Machine{}
@@ -156,8 +166,19 @@ func (m *Machine) exec(p int, pe int, eof int) {
   storeUint16ToY := func() { m.Y16 = getUint16() }
   storeUint8ToX := func() { m.X8 = uint8(m.data[p]) }
   storeUint8ToY := func() { m.Y8 = uint8(m.data[p]) }
+  skipn := func() {
+    nextP := min(p+m.ToSkip,pe)
+    m.ToSkip -= nextP-p
+    p = nextP
+  }
+  if m.ToSkip > 0 {
+    nextP := min(p+m.ToSkip,pe)
+    m.ToSkip -= nextP-p
+    p = nextP
+    if p == pe { return }
+  }
   
-//line dynamic_buffer.go:161
+//line dynamic_buffer.go:182
 	{
 	var _klen int
 	var _trans int
@@ -173,11 +194,11 @@ _resume:
 	for ; _nacts > 0; _nacts-- {
 		 _acts++
 		switch _JPEG_scanner_actions[_acts - 1] {
-		case 18:
+		case 28:
 //line NONE:1
  m.ts = p
 
-//line dynamic_buffer.go:181
+//line dynamic_buffer.go:202
 		}
 	}
 
@@ -247,78 +268,113 @@ _eof_trans:
 		_acts++
 		switch _JPEG_scanner_actions[_acts-1] {
 		case 0:
-//line dynamic_buffer.rl:24
+//line dynamic_buffer.rl:25
  storeUint16ToX() 
 		case 1:
-//line dynamic_buffer.rl:25
+//line dynamic_buffer.rl:26
  storeUint16ToY() 
 		case 2:
-//line dynamic_buffer.rl:26
+//line dynamic_buffer.rl:27
  storeUint8ToX() 
 		case 3:
-//line dynamic_buffer.rl:27
+//line dynamic_buffer.rl:28
  storeUint8ToY() 
 		case 4:
-//line dynamic_buffer.rl:36
-debug(2,m.X16)
+//line dynamic_buffer.rl:30
+
+    skipn()
+    if p == pe { p++; goto _out
+ }
+  
 		case 5:
-//line dynamic_buffer.rl:37
-debug(2,m.Y16)
-		case 6:
-//line dynamic_buffer.rl:42
-debug(2,m.X8)
-		case 7:
 //line dynamic_buffer.rl:43
-debug(2,m.Y8)
-		case 8:
-//line dynamic_buffer.rl:47
-debug(2,"APP0_magic")
-		case 9:
-//line dynamic_buffer.rl:48
-debug(2,"uint16")
-		case 10:
-//line dynamic_buffer.rl:49
-debug(2,"JFIF_ascii")
-		case 11:
-//line dynamic_buffer.rl:50
-debug(2,"version")
-		case 12:
+debug(7,sf("\t\txdensity=%d",m.X16))
+		case 6:
+//line dynamic_buffer.rl:45
+debug(7,sf("\t\tydensity=%d",m.Y16))
+		case 7:
 //line dynamic_buffer.rl:51
-debug(2,"density")
-		case 13:
-//line dynamic_buffer.rl:52
-debug(2,"thumbnail")
-		case 14:
-//line dynamic_buffer.rl:57
-debug(2,"SOI")
-		case 15:
-//line dynamic_buffer.rl:58
-debug(2,"APP0")
-		case 16:
+debug(7,sf("\t\txthumbnail=%d",m.X8))
+		case 8:
+//line dynamic_buffer.rl:53
+debug(7,sf("\t\tythumbnail=%d",m.Y8))
+		case 9:
+//line dynamic_buffer.rl:54
+m.ToSkip=int(m.X8)*int(m.Y8)
+		case 10:
+//line dynamic_buffer.rl:55
+debug(3,sf("\t\tskip thumbnail n=%d",m.ToSkip))
+		case 11:
 //line dynamic_buffer.rl:59
-debug(2,"EOI")
+debug(6,"\tAPP0_magic")
+		case 12:
+//line dynamic_buffer.rl:60
+debug(6,"\tAPP0_len")
+		case 13:
+//line dynamic_buffer.rl:61
+debug(6,"\tJFIF_ascii")
+		case 14:
+//line dynamic_buffer.rl:62
+debug(6,"\tversion")
+		case 15:
+//line dynamic_buffer.rl:63
+debug(6,"\tdensity")
+		case 16:
+//line dynamic_buffer.rl:64
+debug(6,"\tthumbnail")
+		case 17:
+//line dynamic_buffer.rl:70
+debug(4,"\tblock_magic")
+		case 18:
+//line dynamic_buffer.rl:71
+debug(6,"\tblock_len")
 		case 19:
+//line dynamic_buffer.rl:73
+m.ToSkip=int(m.X16-2)
+		case 20:
+//line dynamic_buffer.rl:74
+debug(6,sf("\tBlock Length=%d",m.ToSkip))
+		case 21:
+//line dynamic_buffer.rl:75
+skipn()
+		case 22:
+//line dynamic_buffer.rl:76
+if p==pe { p++; goto _out
+ }
+		case 23:
+//line dynamic_buffer.rl:81
+debug(100,"SOI")
+		case 24:
+//line dynamic_buffer.rl:82
+debug(5,"APP0")
+		case 25:
+//line dynamic_buffer.rl:83
+debug(5,"block")
+		case 26:
+//line dynamic_buffer.rl:84
+debug(5,"EOI")
+		case 29:
 //line NONE:1
  m.te = p+1
 
-		case 20:
-//line dynamic_buffer.rl:63
+		case 30:
+//line dynamic_buffer.rl:88
  m.te = p+1
 
-		case 21:
-//line dynamic_buffer.rl:64
+		case 31:
+//line dynamic_buffer.rl:89
  m.te = p+1
 
-		case 22:
-//line dynamic_buffer.rl:63
+		case 32:
+//line dynamic_buffer.rl:88
  m.te = p
 p--
 
-		case 23:
-//line dynamic_buffer.rl:63
+		case 33:
+//line dynamic_buffer.rl:88
 p = ( m.te) - 1
 
-//line dynamic_buffer.go:322
+//line dynamic_buffer.go:378
 		}
 	}
 
@@ -328,11 +384,11 @@ _again:
 	for ; _nacts > 0; _nacts-- {
 		_acts++
 		switch _JPEG_scanner_actions[_acts-1] {
-		case 17:
+		case 27:
 //line NONE:1
  m.ts = 0
 
-//line dynamic_buffer.go:336
+//line dynamic_buffer.go:392
 		}
 	}
 
@@ -348,9 +404,10 @@ _again:
 		}
 	}
 
+	_out: {}
 	}
 
-//line dynamic_buffer.rl:105
+//line dynamic_buffer.rl:142
 }
 
 func (m *Machine) Run(f io.Reader) {
@@ -372,7 +429,7 @@ func (m *Machine) Run(f io.Reader) {
 
 func main() {
   m := NewMachine()
-  filename := "/home/ben/data/1.jpeg"
+  filename := "/home/ben/data/A.img"
   f,err := os.Open(filename)
   if err != nil {
     fmt.Fprintf(os.Stderr, "Failed to open %s\n", filename)

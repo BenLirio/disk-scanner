@@ -5,7 +5,7 @@ import (
   "io"
   "encoding/binary"
 )
-var verb int = 100
+var verb int = 10
 
 var matching bool = false
 const (
@@ -13,10 +13,11 @@ const (
   NOT_DONE int = -1
   DONE int = 0
 )
-
+func min(a int, b int) int { if a < b { return a } else { return b } }
 /*
 min data_size = 0x02 because of data_size num
 */
+var sf (func(string, ...interface{}) string) = fmt.Sprintf
 
 //TODO: thumbnail data
 %%{
@@ -26,6 +27,11 @@ min data_size = 0x02 because of data_size num
   action store_uint8_to_X { storeUint8ToX() }
   action store_uint8_to_Y { storeUint8ToY() }
 
+  skipn = zlen >{
+    skipn()
+    if p == pe { fbreak; }
+  };
+
   JFIF_ascii = 0x4A 0x46 0x49 0x46 0x00;
   _uint16 = extend{2};
   _uint8 = extend{1};
@@ -33,30 +39,48 @@ min data_size = 0x02 because of data_size num
   xdensity = _uint16;
   ydensity = _uint16;
   density = _uint8
-            xdensity        @store_uint16_to_X @{debug(2,m.X16)}
-            ydensity        @store_uint16_to_Y @{debug(2,m.Y16)}
+            xdensity        @store_uint16_to_X
+                            @{debug(7,sf("\t\txdensity=%d",m.X16))}
+            ydensity        @store_uint16_to_Y
+                            @{debug(7,sf("\t\tydensity=%d",m.Y16))}
             ;
   xthumbnail = _uint8;
   ythumbnail = _uint8;
-  thumbnail_data = extend;
-  thumbnail = xthumbnail      @store_uint8_to_X @{debug(2,m.X8)}
-              ythumbnail      @store_uint8_to_Y @{debug(2,m.Y8)}
-              thumbnail_data
+  thumbnail_data = skipn;
+  thumbnail = xthumbnail      @store_uint8_to_X
+                              @{debug(7,sf("\t\txthumbnail=%d",m.X8))}
+              ythumbnail      @store_uint8_to_Y
+                              @{debug(7,sf("\t\tythumbnail=%d",m.Y8))}
+                              @{m.ToSkip=int(m.X8)*int(m.Y8)}
+              thumbnail_data  >{debug(3,sf("\t\tskip thumbnail n=%d",m.ToSkip))}
               ;
   APP0_magic = 0xFF 0xE0;
-  APP0 =  APP0_magic        @{debug(2,"APP0_magic")}
-          _uint16           @{debug(2,"uint16")}
-          JFIF_ascii        @{debug(2,"JFIF_ascii")}
-          version           @{debug(2,"version")}
-          density           @{debug(2,"density")}
-          thumbnail         @{debug(2,"thumbnail")}
+  APP0_len = _uint16;
+  APP0 =  APP0_magic        @{debug(6,"\tAPP0_magic")}
+          APP0_len          @{debug(6,"\tAPP0_len")}
+          JFIF_ascii        @{debug(6,"\tJFIF_ascii")}
+          version           @{debug(6,"\tversion")}
+          density           @{debug(6,"\tdensity")}
+          thumbnail         @{debug(6,"\tthumbnail")}
           ;
+
+  header_magic = 0xFF extend;
+  block_len = _uint16;
+  block_data = skipn;
+  block =   header_magic    @{debug(4,"\tblock_magic")}
+            block_len       @{debug(6,"\tblock_len")}
+                            @store_uint16_to_X
+                            @{m.ToSkip=int(m.X16-2)}
+                            @{debug(6,sf("\tBlock Length=%d",m.ToSkip))}
+            block_data      >{debug(3,sf("\tskip block_data n=%d",m.ToSkip))}
+            ;
 
   SOI_magic = 0xFF 0xD8;
   EOI_magic = 0xFF 0xD9;
-  JFIF =  SOI_magic     @{debug(2,"SOI")}
-          APP0          @{debug(2,"APP0")}
-          EOI_magic     @{debug(2,"EOI")}
+  JFIF =  SOI_magic     @{debug(100,"SOI")}
+          APP0          @{debug(5,"APP0")}
+          block         @{debug(5,"block")}
+          EOI_magic     @{debug(5,"EOI")}
           ;
   JPEG_scanner :=
   |*
@@ -77,6 +101,7 @@ type Machine struct {
   Y16 uint16
   X8 uint8
   Y8 uint8
+  ToSkip int
 }
 
 func (m *Machine) init() {
@@ -101,6 +126,17 @@ func (m *Machine) exec(p int, pe int, eof int) {
   storeUint16ToY := func() { m.Y16 = getUint16() }
   storeUint8ToX := func() { m.X8 = uint8(m.data[p]) }
   storeUint8ToY := func() { m.Y8 = uint8(m.data[p]) }
+  skipn := func() {
+    nextP := min(p+m.ToSkip,pe)
+    m.ToSkip -= nextP-p
+    p = nextP
+  }
+  if m.ToSkip > 0 {
+    nextP := min(p+m.ToSkip,pe)
+    m.ToSkip -= nextP-p
+    p = nextP
+    if p == pe { return }
+  }
   %% write exec;
 }
 
@@ -123,7 +159,7 @@ func (m *Machine) Run(f io.Reader) {
 
 func main() {
   m := NewMachine()
-  filename := "/home/ben/data/1.jpeg"
+  filename := "/home/ben/data/A.img"
   f,err := os.Open(filename)
   if err != nil {
     fmt.Fprintf(os.Stderr, "Failed to open %s\n", filename)
